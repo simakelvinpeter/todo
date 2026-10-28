@@ -34,7 +34,7 @@ lib/
 
 ## Screenshot
 
-![Todo App](images/todo_app.png)
+![Todo App](asset/todo_app.png)
 
 ## What I Learned
 
@@ -68,3 +68,8 @@ Sima Kelvin Peter
 
 GitHub:
 https://github.com/simakelvinpeter
+## Finished local app behavior
+
+Tasks are saved to Hive when added, completed or deleted, and restored after reopening. Blank tasks cannot be saved. Storage failures show a message rather than pretending a save succeeded. The original yellow design is retained.
+
+Run `flutter analyze` and `flutter test`. This is a single-device learning app; it does not require a backend or sign-in.

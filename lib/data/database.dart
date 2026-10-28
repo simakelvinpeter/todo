@@ -1,26 +1,29 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 class ToDoDataBase {
-  List toDoList = [];
+  ToDoDataBase({Box? box}) : _box = box ?? Hive.box('mybox');
 
-  // reference our box
-  final _myBox = Hive.box('mybox');
+  final Box _box;
+  List<List<dynamic>> toDoList = [];
 
-  // run this method if this is the 1st time ever opening this app
-  void createInitialData() {
-    toDoList = [
-      ["Make Tutorial", false],
-      ["Do Exercise", false],
-    ];
-  }
-
-  // load the data from database
   void loadData() {
-    toDoList = _myBox.get("TODOLIST");
+    final stored = _box.get('TODOLIST');
+    if (stored == null) {
+      toDoList = [
+        ['Make Tutorial', false],
+        ['Do Exercise', false],
+      ];
+      return;
+    }
+    // Read lists written by older versions without keeping invalid entries.
+    toDoList = stored is List
+        ? stored.whereType<List>().where((task) {
+            return task.length == 2 && task[0] is String && task[1] is bool;
+          }).map((task) => <dynamic>[task[0], task[1]]).toList()
+        : [];
   }
 
-  // update the database
-  void updateDataBase() {
-    _myBox.put("TODOLIST", toDoList);
+  Future<void> updateDataBase() async {
+    await _box.put('TODOLIST', toDoList);
   }
 }

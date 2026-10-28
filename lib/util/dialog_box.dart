@@ -4,10 +4,10 @@ import 'my_button.dart';
 class DialogBox extends StatelessWidget {
 
   final TextEditingController controller;
-  VoidCallback onSave;
-  VoidCallback onCancel;
+  final VoidCallback onSave;
+  final VoidCallback onCancel;
 
-  DialogBox({
+  const DialogBox({
     super.key,
     required this.controller,
     required this.onSave,
@@ -26,6 +26,9 @@ class DialogBox extends StatelessWidget {
             // get user input
             TextField(
               controller: controller,
+              autofocus: true,
+              maxLength: 200,
+              onSubmitted: (_) => onSave(),
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
                 hintText: "Add a new task",
@@ -40,9 +43,12 @@ class DialogBox extends StatelessWidget {
               children: [
 
                 // save button
-                MyButton(
-                  text: "Save",
-                  onPressed: onSave,
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: controller,
+                  builder: (context, value, child) => MyButton(
+                    text: "Save",
+                    onPressed: value.text.trim().isEmpty ? null : onSave,
+                  ),
                 ),
 
                 const SizedBox(width: 8),

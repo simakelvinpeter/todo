@@ -1,30 +1,61 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todo_app/main.dart';
+import 'package:todo_app/data/database.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  late Directory directory;
+  late Box box;
+
+  setUp(() async {
+    directory = await Directory.systemTemp.createTemp('todo-test-');
+    Hive.init(directory.path);
+    box = await Hive.openBox('mybox');
+  });
+
+  tearDown(() async {
+    await Hive.close();
+    await directory.delete(recursive: true);
+  });
+
+  test('tasks and completion survive closing and reopening storage', () async {
+    final database = ToDoDataBase(box: box)..loadData();
+    database.toDoList = [['Read a book', true]];
+    await database.updateDataBase();
+    await box.close();
+    box = await Hive.openBox('mybox');
+    final reopened = ToDoDataBase(box: box)..loadData();
+    expect(reopened.toDoList, [['Read a book', true]]);
+    reopened.toDoList.clear();
+    await reopened.updateDataBase();
+    expect((ToDoDataBase(box: box)..loadData()).toDoList, isEmpty);
+  });
+
+  testWidgets('add, reject blank input, complete and delete a saved task', (tester) async {
+    await box.put('TODOLIST', <List<dynamic>>[]);
     await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
+    expect(find.text('No tasks yet. Tap + to add one.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Add task'));
+    await tester.pumpAndSettle();
+    final saveButton = find.widgetWithText(MaterialButton, 'Save');
+    expect(tester.widget<MaterialButton>(saveButton).onPressed, isNull);
+    await tester.enterText(find.byType(TextField), '  Read a book  ');
     await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(saveButton);
+    await tester.runAsync(() => box.flush());
+    await tester.pumpAndSettle();
+    expect(find.text('Read a book'), findsOneWidget);
+    expect(box.get('TODOLIST'), [['Read a book', false]]);
+    await tester.tap(find.byType(Checkbox));
+    await tester.runAsync(() => box.flush());
+    await tester.pumpAndSettle();
+    expect(box.get('TODOLIST'), [['Read a book', true]]);
+    await tester.tap(find.byTooltip('Delete task'));
+    await tester.runAsync(() => box.flush());
+    await tester.pumpAndSettle();
+    expect(box.get('TODOLIST'), isEmpty);
+    expect(find.text('No tasks yet. Tap + to add one.'), findsOneWidget);
   });
 }
