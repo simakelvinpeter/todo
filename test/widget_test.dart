@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -34,7 +35,11 @@ void main() {
   });
 
   testWidgets('add, reject blank input, complete and delete a saved task', (tester) async {
-    await tester.runAsync(() => box.put('TODOLIST', <List<dynamic>>[]));
+    await tester.runAsync(() async {
+      await box.close();
+      box = await Hive.openBox('mybox', bytes: Uint8List(0));
+      await box.put('TODOLIST', <List<dynamic>>[]);
+    });
     await tester.pumpWidget(const MyApp());
     expect(find.text('No tasks yet. Tap + to add one.'), findsOneWidget);
     await tester.tap(find.byTooltip('Add task'));
