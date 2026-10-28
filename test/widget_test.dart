@@ -34,7 +34,7 @@ void main() {
   });
 
   testWidgets('add, reject blank input, complete and delete a saved task', (tester) async {
-    await box.put('TODOLIST', <List<dynamic>>[]);
+    await tester.runAsync(() => box.put('TODOLIST', <List<dynamic>>[]));
     await tester.pumpWidget(const MyApp());
     expect(find.text('No tasks yet. Tap + to add one.'), findsOneWidget);
     await tester.tap(find.byTooltip('Add task'));
