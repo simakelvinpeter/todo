@@ -23,7 +23,6 @@ class DialogBox extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
 
-            // get user input
             TextField(
               controller: controller,
               autofocus: true,
@@ -37,12 +36,10 @@ class DialogBox extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // buttons
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
 
-                // save button
                 ValueListenableBuilder<TextEditingValue>(
                   valueListenable: controller,
                   builder: (context, value, child) => MyButton(
@@ -53,7 +50,6 @@ class DialogBox extends StatelessWidget {
 
                 const SizedBox(width: 8),
 
-                // cancel button
                 MyButton(
                   text: "Cancel",
                   onPressed: onCancel,
